@@ -1,0 +1,16 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts", "mjs"],
+  "rootDir": "..",
+  "roots": ["<rootDir>/test"],
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j|mj)s$": "@swc/jest"
+  },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(@nestjs/passport|@nestjs/jwt|@nestjs/mapped-types|@nestjs/schedule|passport|@prisma/client)/)"
+  ],
+  "resolver": "<rootDir>/test/jest-resolver.cjs",
+  "modulePaths": ["<rootDir>"],
+  "setupFiles": ["<rootDir>/test/jest-setup-env.cjs"]
+}

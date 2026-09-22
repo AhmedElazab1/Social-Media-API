@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: social-media-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: social_media
+
+    ports:
+      - '5433:5432'
+
+    volumes:
+      - social-media-api_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  social-media-api_postgres_data:
+    external: true

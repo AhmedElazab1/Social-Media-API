@@ -1,0 +1,162 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  username       String    @unique
+  firstName      String
+  lastName       String
+  bio            String?
+  profilePicture String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  passwordHash   String
+  role           Role      @default(USER)
+
+  comments               Comment[]
+  following              Follow[]       @relation("Following")
+  followers              Follow[]       @relation("Followers")
+  likes                  Like[]
+  triggeredNotifications Notification[] @relation("NotificationActor")
+  notifications          Notification[] @relation("NotificationRecipient")
+  posts                  Post[]
+  sessions               Session[]
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  refreshTokenHash String
+  userId           String
+  createdAt        DateTime  @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  replacedById     String?   @unique
+  replacedBy       Session?  @relation("SessionReplacement", fields: [replacedById], references: [id])
+  replacedFrom     Session?  @relation("SessionReplacement")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+}
+
+model Post {
+  id         String    @id @default(uuid())
+  content    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  authorId   String
+  comments   Comment[]
+  likes      Like[]
+  mediaFiles Media[]
+  author     User      @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  authorId  String
+  postId    String
+  author    User      @relation(fields: [authorId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id])
+  likes     Like[]
+
+  @@index([authorId])
+  @@index([postId])
+  @@index([createdAt])
+}
+
+model Like {
+  id        String       @id @default(uuid())
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  userId    String
+  postId    String?
+  commentId String?
+
+  comment Comment? @relation(fields: [commentId], references: [id])
+  post    Post?    @relation(fields: [postId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@index([postId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model Follow {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  unfollowedAt DateTime?
+  followerId   String
+  followingId  String
+  follower     User      @relation("Following", fields: [followerId], references: [id])
+  following    User      @relation("Followers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  url       String
+  type      String?
+  createdAt DateTime @default(now())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+
+  @@index([postId])
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  type        NotificationType
+  message     String
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  recipientId String
+  actorId     String?
+  actor       User?            @relation("NotificationActor", fields: [actorId], references: [id])
+  recipient   User             @relation("NotificationRecipient", fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  SAD
+  ANGRY
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  MENTION
+}
+
+enum Role {
+  USER
+  ADMIN
+}
